@@ -1,0 +1,13 @@
+# Core HTTP & Network Client
+httpx>=0.28.1
+
+# Web Application Backend (FastAPI + Uvicorn)
+fastapi>=0.141.1
+uvicorn[standard]>=0.52.1
+pydantic>=2.13.4
+
+# Model Context Protocol (MCP) Server
+fastmcp>=2.12.3
+
+# Image Processing (optional helper)
+pillow>=12.3.0

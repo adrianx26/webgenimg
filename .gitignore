@@ -1,0 +1,13 @@
+# Python bytecode and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Images created by local runs
+generated_images/

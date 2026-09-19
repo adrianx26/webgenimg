@@ -1,0 +1,114 @@
+{
+  "MTG Card": {
+    "prompt": "[input.description], magic the gathering",
+    "negative": "[input.negative], low-quality, deformed, blurry, bad art"
+  },
+  "Realistic images": {
+    "prompt": "[input.description], high quality image, 4k, 8k, HD, UHD, Sharp Focus, In Frame",
+    "negative": "[input.negative], low quality, deformed, blurry, bad art, drawing, painting, horrible resolutions, low DPI, low PPI, blurry, glitch, error"
+  },
+  "Realistic humans": {
+    "prompt": "[input.description], high quality image, 4k, 8k, HD, UHD",
+    "negative": "[input.negative], low quality, deformed, blurry, bad art, drawing, painting, incorrect anatomy, ugliness, ugly, horrible resolutions, low DPI, low PPI, bad character positioning, absurd anatomy, tiling, pixelization, low pixel count, blurry, low-res face, low poly, Poorly Drawn Characters, Badly Drawn Eyes, Badly Drawn Mouth, Badly Drawn Ears, Badly Drawn Nose, Badly Drawn Hands, Badly Drawn Feet, Badly Drawn Legs, Badly Drawn Hair, Badly Drawn Clothing, bad anatomy, (ugly), missing arms, bad proportions, tiling, missing legs, blurry, (poorly drawn feet), morbid, cloned face, ((extra limbs)), (mutated hands), cropped, (disfigured), mutation, deformed, (mutilated), dehydrated, body out of frame, out of frame, (disfigured), ((bad anatomy)), (poorly drawn face), duplicate, cut off, (poorly drawn hands), error, low contrast, signature, (extra arms), underexposed, text, (extra fingers), overexposed, (too many fingers), (extra legs), bad art, ugly, (extra limbs), beginner, username, (fused fingers), amateur, watermark, (distorted face), worst quality, jpeg artifacts, low quality, (malformed limbs), long neck, low-res, (poorly Rendered face), low resolution, low saturation, (bad composition), Images cut out at the top, left, right, bottom, (deformed body features), (poorly rendered hands)"
+  },
+  "𝗡𝗼 𝘀𝘁𝘆𝗹𝗲": {
+    "prompt": "[input.description]",
+    "negative": "[input.negative]"
+  },
+  "Anti-NSFW": {
+    "prompt": "[input.description], SFW",
+    "negative": "[input.negative], NSFW, inappropriate, nudity, 18+ content"
+  },
+  "League of Legends": {
+    "prompt": "[input.description], fyptt.toconcept art, digital art, illustration, (league of legends style concept art), inspired by wlop style, 8k, fine details, sharp, very detailed, high resolution,anime, (realistic) ,magic the gathering, colorful background, no watermark,wallpaper, normal eyes",
+    "negative": "[input.negative], low-quality, deformed, blurry, bad art, (watermark), (text), (bad eyes)"
+  },
+  "Jester": {
+    "prompt": "[input.description] (((jester laughing maniacally anime art style))) (((jester anime art style))) (((pointy jester hat anime art style))) (((yugioh anime art style))) (((neon colors))) (((vibrant colors))) (((bright colors))) (((lens flare))) (((light leaks))) (((long exposure)))",
+    "negative": "[input.negative] (((yugioh hair))) (((low-quality))) (((deformed))) (((blurry))) (((bad art)))"
+  },
+  "Ninja": {
+    "prompt": "[input.description], one character, ninja gaiden anime art style, ninja scroll anime art style, martial arts anime art style, 3D anime art style, heavy outlines art style, light leaks, lens flare, long exposure",
+    "negative": "[input.negative], two or more characters, low-quality, deformed, blurry, bad art"
+  },
+  "Random Girl 1": {
+    "prompt": "[input.description], one character, female in her late 20s, {dark|light|medium} skin complexion, smooth skin, american face, {dark|light|medium} {blue|green|gray|hazel|brown} eyes, pretty lips, pretty eyes, light makeup, abstract halftone background, thick border around image, vibrant colors, bright colors, high contrast, {amazingly beautiful|embodiment of perfection|stunningly gorgeous} girl anime art style",
+    "negative": "[input.negative], more than one character, low-quality, deformed, blurry, bad art, muscular female, more than two arms, less than two arms, more than two hands, less than two hands, floating body parts, floating limbs, torso twisted backwards from legs, legs twisted backwards from torso, random legs that don't belong, random arms that don't belong, random limbs that don't belong, nipples in the wrong place, pale skin, leg in the wrong place, arm in the wrong place, knee bent the wrong way, deformed legs, flat nose, pointy nose, unnatural skin colors"
+  },
+  "Random Girl 2": {
+    "prompt": "one character, female in her late 20s, {dark|light|medium} skin complexion, smooth skin, american face, {dark|light|medium} {blue|green|gray|hazel|brown} eyes, pretty lips, pretty eyes, light makeup, wearing {jeans|short shorts|a revealing outfit|a skin-tight bodysuit|a punk rock outfit|a steampunk outfit|a college cheerleader uniform|a skater girl outfit|a swimsuit|a bikini|underwear and a t-shirt|fancy underwear|a minidress with stockings|a miniskirt with stockings|leggings}, view from {the front|behind, rear projection}, {character portrait|{high-angle|low-angle|close up|over-the-shoulder|wide-angle|profile|full body|telephoto|panoramic|handheld|pov} shot|pov shot}, abstract halftone background, thick border around image, vibrant colors, bright colors, high contrast, {amazingly beautiful|embodiment of perfection|stunningly gorgeous} girl anime art style",
+    "negative": "more than one character, low-quality, deformed, blurry, bad art, muscular female, more than two arms, less than two arms, more than two hands, less than two hands, floating body parts, floating limbs, torso twisted backwards from legs, legs twisted backwards from torso, random legs that don't belong, random arms that don't belong, random limbs that don't belong, nipples in the wrong place, pale skin, leg in the wrong place, arm in the wrong place, knee bent the wrong way, deformed legs, flat nose, pointy nose, unnatural skin colors"
+  },
+  "Lego": {
+    "prompt": "([input.description]), (legos art style:1.3), (lego video game art style:1.3)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Skittles": {
+    "prompt": "([input.description]), (skittles art style:1.3), (taste the rainbow art style:1.3), skittles, tropical skittles, sour skittles, neon color grading, bright color grading, vibrant color grading, light leaks, lens flare, long exposure",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Webcore": {
+    "prompt": "([input.description]), (bold colors made in MS Paint and retro graphic design art style:1.3), (pixel art style:1.3), (neon color grading:1.2)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Terraria": {
+    "prompt": "([input.description]), (Terrarria Art Style:1.3), (Pixel Art Style:1.3), (Vibrant Color Grading:1.3)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Final Fantasy": {
+    "prompt": "([input.description]), (Final Fantasy Art Style:1.3), (CGI Video Game Art Style:1.3), (3D Video Game Art Style:1.3), (light leaks:1.1), (lens flare:1.1)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Star Wars Character": {
+    "prompt": "([input.description]), (((one character:1.5))),(Star Wars Art Style:1.3), (Animated Star Wars Art style:1.3), (Star Wars Anime Art style:1.3), (Anime Art style:1.3), (bright color grading:1.2), (vibrant color grading:1.2), (light leaks), (lens flare)",
+    "negative": "([input.negative]), (((two or more characters:1.5))), (floating lightsabers:1.3), (unaccompanied lightsabers:1.3), low-quality, deformed, blurry, bad art"
+  },
+  "Star Wars Battle": {
+    "prompt": "([input.description]), (((epic space battle:1.5))),(Star Wars Space Battle Art Style:1.3), (Animated Star Wars Art style:1.3), (Space Battle Anime Art style:1.3), (Anime Art style:1.3), (Starship Battle Art Style:1.3), (bright color grading:1.2), (vibrant color grading:1.2), (light leaks), (lens flare)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Dragonball": {
+    "prompt": "([input.description]), (Dragonball Anime Art Style:1.1), (YuGiOh art style:1.3), (bright color grading:1.2), (vibrant color grading:1.2), (light leaks), (lens flare)",
+    "negative": "([input.negative]), (yugioh hair:1.5), low-quality, deformed, blurry, bad art"
+  },
+  "Undertale?": {
+    "prompt": "([input.description]), (Undertale Anime Art Style:1.3)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "ENA": {
+    "prompt": "([input.description]), (AND NEW GAME created by Peruvian animator Joel Guerra art style:1.3), (Surrealist crossed with Late 90s and Early 2000s Computer software and obscure console gaming imagery art style:1.3), (bright color grading:1.2)",
+    "negative": "([input.negative]), low-quality, deformed, blurry, bad art"
+  },
+  "Neko (Catgirl)": {
+    "prompt": "(((one character:1.5))), (human catgirl with a cat tail anime art style:1.3), (waifu anime art style:1.3), (gorgeous anime art style:1.3), (yugioh art style:1.3), (2d disney character art style:1.1), (catgirl anime art style:1.3), (neko anime art style:1.3), (vibrant color grading:1.6), (bright color grading:1.6), adult female catgirl, perfect body, {dark|light|medium} skin complexion, pretty lips, pretty eyes, light makeup, ({character portrait|{high-angle|low-angle|close up|over-the-shoulder|wide-angle|profile|full body|telephoto|panoramic|handheld} shot}:1.3)",
+    "negative": "(((two or more characters:1.5))), (yugioh hair:1.5),low-quality, deformed, blurry, bad art, muscular female, more than two arms, less than two arms, more than two hands, less than two hands, floating body parts, floating limbs, unnatural female anatomy"
+  },
+  "American Girl": {
+    "prompt": "(((one character:1.5))), (perfect gorgeous anime art style:1.3), (yugioh art style:1.3), (2d disney character art style:1.3), (gen13 comic art style), (stormwatch comic art style), tall adult female in her early 20s, perfect body, {dark|light|medium} skin complexion, smooth skin, american face, pretty lips, pretty eyes, light makeup, wearing {jeans|short shorts|a revealing outfit|a skin-tight bodysuit|a punk rock outfit|a steampunk outfit|a college cheerleader uniform|a skater girl outfit|a swimsuit|a bikini|underwear and a t-shirt with no bra|fancy underwear|a minidress with stockings|a miniskirt with stockings|leggings}:1.2, (view from {the front|behind}), ({character portrait|{high-angle|low-angle|close up|over-the-shoulder|wide-angle|profile|full body|telephoto|panoramic|handheld} shot}:1.3)",
+    "negative": "(((two or more characters:1.5))), (pointy nose:1.5), (yugioh hair:1.5), low-quality, deformed, blurry"
+  },
+  "𝐍𝐒𝐅𝐖 - 𝐑𝐞𝐚𝐥𝐢𝐬𝐭𝐢𝐜": {
+    "prompt": "[input.description], highly realistic, realistic portrait, (nsfw), anatomically correct, realistic photograph, real colors, award winning photo, detailed face, realistic eyes, beautiful, sharp focus, high resolution, volumetric lighting, incredibly detailed, masterpiece, breathtaking, exquisite, great attention to skin and eyes",
+    "negative": "[input.negative], unrealistic, animated, 3d, sketches, (text), low-quality, deformed, extra limbs, blurry, bad art, (logo), watermark, blurred, cut off, extra fingers, bad quality, distortion of proportions, deformed fingers, elongated body, cropped image, deformed hands, deformed legs, deformed face, twisted fingers, double image, long neck, extra limb, plastic, disfigured, mutation, sloppy, ugly, pixelated, bad hands, aliasing, overexposed, oversaturated, burnt image, fuzzy, poor quality, deformed arms"
+  },
+  "𝐍𝐒𝐅𝐖 - 𝐀𝐧𝐢𝐦𝐞": {
+    "prompt": "[input.description], intricate detail, hyper-anime, trending on artstation, 8k, fluid motion, stunning shading, anime, highly detailed, realistic, (nsfw), dramatic lighting, beautiful, animation, sharp focus, award winning, masterpiece, cinematic, dynamic, cinematic lighting, breathtaking, exquisite, great attention to skin and eyes, exceptional, exemplary, unsurpassed, viral, popular, buzzworthy, up-and-coming, emerging, promising, acclaimed, premium",
+    "negative": "[input.negative], photography, low-quality, deformed, (text), blurry, bad art, (logo), watermark, blurred, cut off, extra fingers, bad quality, distortion of proportions, deformed fingers, elongated body, cropped image, deformed hands, deformed legs, deformed face, twisted fingers, double image, long neck, extra limb, plastic, disfigured, mutation, sloppy, ugly, pixelated, bad hands, aliasing, overexposed, oversaturated, burnt image, fuzzy, poor quality, extra limbs, deformed arms"
+  },
+  "𝐍𝐒𝐅𝐖 - 𝐑𝐞𝐚𝐥𝐢𝐬𝐭𝐢𝐜 (Stronger)": {
+    "prompt": "[input.description], highly realistic, realistic portrait, (((nsfw))), anatomically correct, realistic photograph, real colors, award winning photo, detailed face, realistic eyes, beautiful, sharp focus, high resolution, volumetric lighting, incredibly detailed, masterpiece, breathtaking, exquisite, great attention to skin and eyes",
+    "negative": "[input.negative], unrealistic, animated, sketches, (text), low-quality, deformed, extra limbs, blurry, bad art, (logo), watermark, blurred, cut off, extra fingers, bad quality, distortion of proportions, deformed fingers, elongated body, cropped image, deformed hands, deformed legs, deformed face, twisted fingers, double image, long neck, extra limb, plastic, disfigured, mutation, sloppy, ugly, pixelated, bad hands, aliasing, overexposed, oversaturated, burnt image, fuzzy, poor quality, deformed arms"
+  },
+  "𝐍𝐒𝐅𝐖 - 𝐀𝐧𝐢𝐦𝐞 (Stronger)": {
+    "prompt": "[input.description], intricate detail, hyper-anime, trending on artstation, 8k, fluid motion, stunning shading, anime, highly detailed, realistic, (((nsfw))), dramatic lighting, beautiful, animation, sharp focus, award winning, masterpiece, cinematic, dynamic, cinematic lighting, breathtaking, exquisite, great attention to skin and eyes, exceptional, exemplary, unsurpassed, viral, popular, buzzworthy, up-and-coming, emerging, promising, acclaimed, premium",
+    "negative": "[input.negative], photography, low-quality, deformed, (text), blurry, bad art, (logo), watermark, blurred, cut off, extra fingers, bad quality, distortion of proportions, deformed fingers, elongated body, cropped image, deformed hands, deformed legs, deformed face, twisted fingers, double image, long neck, extra limb, plastic, disfigured, mutation, sloppy, ugly, pixelated, bad hands, aliasing, overexposed, oversaturated, burnt image, fuzzy, poor quality, extra limbs, deformed arms, Mosaic"
+  },
+  "NSFW Painted Anime": {
+    "prompt": "",
+    "negative": ""
+  },
+  "Realistic Human Generator": {
+    "prompt": "[input.description], in soft gaze, looking straight at the camera, skin blemishes, imperfect skin, skin pores, no makeup, no cosmetics, matured, solo, centered, RAW photo, detailed, clear features, sharp focus, film grain, 8k uhd, candid portrait, natural lighting",
+    "negative": "[input.negative], (wrong sex, wrong gender, wrong age, perfect skin, facial hair on women: 1.1), (black and white, monochrome, highly saturated, overexposure:1.1), (cropped, collage, multiple people:1.1), (famous people, models, artists, celebrities), makeup, cosmetics, denim, gore, blood, camera, deviantart, artstation, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime, illustration, painting, cross eyes, have strabismus, hands, jpeg"
+  }
+}
