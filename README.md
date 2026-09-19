@@ -6,6 +6,26 @@ This project reverse-engineers and replicates the AI image/animation generator l
 
 ## 1. How the Site & Connection Work
 
+### Local App Architecture
+
+```mermaid
+flowchart LR
+    Browser[Browser\nWeb UI] -->|Loads HTML, CSS, JavaScript| Web[FastAPI web_app.py]
+    Browser -->|GET /api/styles\nGET /api/history\nPOST /api/generate| Web
+    MCPClient[Codex, Claude, Cursor\nor another MCP client] -->|MCP tool call| MCP[perchance_mcp.py]
+
+    Web --> Client[PerchanceClient]
+    MCP --> Client
+    Client -->|Verify anonymous session| Auth[Perchance Auth API]
+    Client -->|Send prompt, style, seed\nand image settings| Generator[Perchance Generation API]
+    Generator -->|Temporary image URL| Client
+    Client -->|Download JPEG| Images[(generated_images/)]
+    Images -->|Served at /images/*| Web
+    Web -->|Gallery image| Browser
+```
+
+The local web app and MCP server are two entry points to the same Python client. The client sends the generation request to Perchance, downloads the returned image, and stores it locally for the gallery or the calling MCP client.
+
 Perchance generators are client-side templates hosted in iframes that communicate with a backend image generation service at `https://image-generation.perchance.org`.
 
 ### The Connection Flow:
