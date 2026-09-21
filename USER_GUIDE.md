@@ -14,13 +14,14 @@ Welcome to the comprehensive guide for the **Perchance b7kc35yv7u Replicant Appl
 7. [Adult Mode (+18) & NSFW Presets](#7-adult-mode-18--nsfw-presets)
 8. [Prompt Engineering Tips](#8-prompt-engineering-tips)
 9. [Troubleshooting & FAQ](#9-troubleshooting--faq)
+10. [Installation](#10-installation)
 
 ---
 
 ## 1. Overview & Features
 
 This application reverse-engineers the generator at `https://perchance.org/b7kc35yv7u` created by community developer *9gin*. It replicates:
-- **Direct backend communication** via tokenless session authentication (`/api/verifyUser` + `/api/generate`).
+- **Browser-backed Perchance communication** using a full Chrome session to obtain the current temporary access parameters before calling `/api/generate`.
 - **All 28 Art Style presets** extracted directly from the generator's source code.
 - **Adult (+18) mode toggle** with NSFW-specific presets (*NSFW - Realistic*, *NSFW - Anime*, *NSFW Painted Anime*) and quick modifiers.
 - **Aspect Ratio / Resolution control**: Square (`512x512`), Portrait (`512x768`), Landscape (`768x512`), Large Square (`768x768`).
@@ -33,6 +34,8 @@ This application reverse-engineers the generator at `https://perchance.org/b7kc3
 ## 2. Running the Web Application (Interactive UI)
 
 The Web Application provides a modern dark-themed interface mirroring `b7kc35yv7u`.
+
+For first-time setup, follow [INSTALLATION.md](INSTALLATION.md). The CLI and MCP paths use Playwright and a full Chrome/Chromium executable because Perchance's old HTTP-only verification flow can return `client_update_required`.
 
 ### How to Start:
 1. Open PowerShell or terminal in the project directory:
@@ -229,3 +232,15 @@ In `b7kc35yv7u`, the adult options are represented by specific style recipes:
   - Note the `seed` number from the gallery or CLI output. Pass `--seed <number>` with the identical prompt, style, resolution, and guidance scale.
 - **Q: Does this require any API key or subscription?**
   - No. Perchance's image generation is completely free and public.
+
+## 10. Installation
+
+Install the project dependencies from the repository root:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Ensure Google Chrome or another full Chromium executable is installed. Set `PERCHANCE_CHROME_PATH` if it is not in the standard Windows location. For cloning, upgrades, MCP configuration, and troubleshooting, see [INSTALLATION.md](INSTALLATION.md).

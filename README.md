@@ -21,19 +21,19 @@ flowchart LR
     MCP --> Client[Unofficial PerchanceClient]
 ```
 
-The web UI opens Perchance's browser generator in a new tab, so each visitor completes Perchance's normal browser verification and receives images directly there. Perchance does not permit the image page to be framed by this localhost app. The MCP server still uses an unofficial direct client and may be rejected by Perchance's anti-bot or compatibility checks.
+The web UI opens Perchance's browser generator in a new tab, so each visitor completes Perchance's normal browser verification and receives images directly there. Perchance does not permit the image page to be framed by this localhost app. The Python/MCP client now falls back to a full Chrome session when the HTTP-only verification endpoint reports that the client is outdated.
 
-Perchance generators are client-side templates hosted in iframes that communicate with a backend image generation service at `https://image-generation.perchance.org`.
+Perchance generators are client-side templates hosted in iframes that communicate with a backend image generation service at `https://image-generation.perchance.org`. The service now requires browser-originated verification parameters, so direct HTTP-only clients are not reliable.
 
 ### The Connection Flow:
 
 ```
 [Client / Browser]
        │
-       ▼ (1) GET /api/verifyUser?thread=0
-[Perchance Auth API] ──► Returns: { status: "success", userKey: "..." }
+       ▼ (1) Full Chrome loads b7kc35yv7u and passes content/Turnstile checks
+[Perchance Generator] ──► Provides userKey + adAccessCode in its browser request
        │
-       ▼ (2) POST /api/generate?userKey=...&requestId=...
+       ▼ (2) Browser-context POST /api/generate?userKey=...&adAccessCode=...
 [Perchance Gen API]  ──► Dispatches prompt to GPU worker (FLUX.1-schnell / SDXL)
        │              ──► Returns: { status: "success", imageId: "...", imageDownloadUrl: "/api/downloadTemporaryImageViaProxy?..." }
        │
@@ -41,9 +41,10 @@ Perchance generators are client-side templates hosted in iframes that communicat
 [Perchance Image API]──► Returns raw JPEG binary
 ```
 
-1. **User Key Verification (`/api/verifyUser`)**:
-   - Generates an anonymous session `userKey` tied to the client.
-   - When requests include realistic browser headers (`User-Agent`, `Referer`, `Origin`), verification succeeds immediately without Cloudflare Turnstile barriers.
+1. **Browser Verification**:
+   - A full Chrome session loads the official generator and accepts its content-preferences gate.
+   - The client captures the temporary `userKey` and `adAccessCode` from the generator's own request.
+   - The HTTP-only verification path remains as a fast path for compatible responses, but the client automatically switches to full Chrome when Perchance returns `client_update_required`.
 2. **Generation Request (`/api/generate`)**:
    - Accepts prompt, negative prompt, resolution (`512x512`, `512x768`, `768x512`, `768x768`), seed, and guidance scale.
 3. **Image Retrieval**:
@@ -102,6 +103,8 @@ python perchance_client.py --prompt "fantasy sorceress casting spells" --style "
 python perchance_client.py --list-styles
 ```
 
+The CLI requires Python 3.10+, the packages in `requirements.txt`, and Google Chrome or another full Chromium executable. See [INSTALLATION.md](INSTALLATION.md) for setup and troubleshooting.
+
 ### Option B: Web Application (1:1 UI Clone)
 Start the local FastAPI web server:
 
@@ -121,6 +124,8 @@ Integrate directly into Antigravity, Claude Desktop, Cursor, or any MCP client:
 ```bash
 python perchance_mcp.py
 ```
+
+The MCP server uses the same browser-backed fallback as the CLI. Keep Chrome installed on the machine where the MCP server runs.
 
 **Exposed MCP Tools**:
 - `generate_perchance_image(prompt, negative_prompt, art_style, art_style_mix, adult_mode, shape, guidance_scale, seed, output_filename)`

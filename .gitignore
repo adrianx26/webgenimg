@@ -11,3 +11,9 @@ venv/
 
 # Images created by local runs
 generated_images/
+
+# Local CLI output
+*.jpeg
+*.jpg
+*.png
+!static/*.png

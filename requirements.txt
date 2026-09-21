@@ -1,5 +1,6 @@
 # Core HTTP & Network Client
 httpx>=0.28.1
+playwright>=1.52.0
 
 # Web Application Backend (FastAPI + Uvicorn)
 fastapi>=0.141.1

@@ -7,8 +7,11 @@ import json
 import os
 import random
 import re
+import base64
+import shutil
 import time
 from typing import Dict, Any, Optional, List, Tuple
+from urllib.parse import parse_qs, urlparse
 import httpx
 
 BASE_URL = "https://image-generation.perchance.org/api"
@@ -149,6 +152,226 @@ class PerchanceClient:
             )
         raise PerchanceServiceError(f"User verification failed: {data}")
 
+    @staticmethod
+    def _browser_executable() -> Optional[str]:
+        configured = os.environ.get("PERCHANCE_CHROME_PATH")
+        if configured:
+            return configured
+        candidates = [
+            os.path.join(os.environ.get("PROGRAMFILES", ""), "Google", "Chrome", "Application", "chrome.exe"),
+            os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), "Google", "Chrome", "Application", "chrome.exe"),
+            shutil.which("chrome"),
+            shutil.which("google-chrome"),
+        ]
+        return next((path for path in candidates if path and os.path.exists(path)), None)
+
+    def _generate_in_browser(
+        self,
+        prompt: str,
+        negative_prompt: str,
+        art_style: str,
+        art_style_mix: str,
+        adult_mode: bool,
+        shape: str,
+        guidance_scale: float,
+        seed: int,
+        sub_channel: Optional[str],
+        extra_modifiers: Optional[List[str]],
+    ) -> GenerationResult:
+        """Use a real Chromium context when Perchance requires Turnstile verification."""
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError as exc:
+            raise PerchanceServiceError(
+                "Perchance requires browser verification. Install the Playwright dependency "
+                "and a Chrome/Chromium browser, then retry."
+            ) from exc
+
+        final_prompt, final_neg = self.compose_prompt(
+            description=prompt,
+            negative=negative_prompt,
+            art_style=art_style,
+            art_style_mix=art_style_mix,
+            adult_mode=adult_mode,
+            extra_modifiers=extra_modifiers,
+        )
+        res_map = {
+            "portrait": "512x768",
+            "square": "512x512",
+            "landscape": "768x512",
+            "large_square": "768x768",
+            "portrait(512x768px)": "512x768",
+            "square(512x512px)": "512x512",
+            "landscape(768x512px)": "768x512",
+            "512x512": "512x512",
+            "512x768": "512x768",
+            "768x512": "768x512",
+            "768x768": "768x768",
+        }
+        resolution = res_map.get(shape.lower().strip(), "512x512")
+        target_sub_channel = sub_channel or ("nsfw" if adult_mode else self.sub_channel)
+        key_pattern = re.compile(r"userKey=([a-fA-F0-9]{64})")
+
+        executable = self._browser_executable()
+        if not executable:
+            raise PerchanceServiceError(
+                "Perchance requires browser verification, but no Chrome executable was found. "
+                "Set PERCHANCE_CHROME_PATH to a full Chrome/Chromium executable."
+            )
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                headless=True,
+                executable_path=executable,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            context = browser.new_context(user_agent=DEFAULT_USER_AGENT)
+            page = context.new_page()
+            captured_key: List[str] = []
+            captured_generate_urls: List[str] = []
+            generated_request_finished = False
+
+            def capture_key(request: Any) -> None:
+                match = key_pattern.search(request.url)
+                if match and not captured_key:
+                    captured_key.append(match.group(1))
+                if "/api/generate?" in request.url:
+                    captured_generate_urls.append(request.url)
+
+            page.on("request", capture_key)
+
+            def capture_response(response: Any) -> None:
+                nonlocal generated_request_finished
+                if "/api/generate?" in response.url:
+                    generated_request_finished = True
+
+            page.on("response", capture_response)
+            try:
+                page.goto("https://perchance.org/b7kc35yv7u", wait_until="domcontentloaded", timeout=60000)
+                page.wait_for_timeout(5000)
+
+                # New browser sessions show a content-preferences gate before
+                # the generator iframe is created.
+                warning_button = page.get_by_text("I am over 18 - Show Content", exact=False)
+                if warning_button.count():
+                    page.evaluate(
+                        """() => {
+                            const button = document.getElementById("showContentBtn");
+                            if (button) button.click();
+                        }"""
+                    )
+                    page.wait_for_timeout(5000)
+
+                if not captured_key:
+                    for frame in page.frames:
+                        buttons = frame.locator("button")
+                        for index in range(buttons.count()):
+                            button = buttons.nth(index)
+                            if "generate" in button.inner_text(timeout=2000).lower():
+                                button.click(timeout=10000)
+                                break
+                        if captured_key:
+                            break
+                deadline = time.time() + 45
+                while not captured_key and time.time() < deadline:
+                    page.wait_for_timeout(500)
+                if not captured_key:
+                    raise PerchanceServiceError(
+                        "Perchance browser verification did not provide an access key. "
+                        "The site may be blocked by a browser challenge."
+                    )
+
+                user_key = captured_key[0]
+                if not captured_generate_urls:
+                    raise PerchanceServiceError(
+                        "Perchance browser verification returned an access key but no "
+                        "generation contract."
+                    )
+                deadline = time.time() + 180
+                while not generated_request_finished and time.time() < deadline:
+                    page.wait_for_timeout(1000)
+                if not generated_request_finished:
+                    raise PerchanceServiceError(
+                        "Perchance did not finish its initial browser request before "
+                        "the generation window expired."
+                    )
+                generate_query = parse_qs(urlparse(captured_generate_urls[-1]).query)
+                ad_access_code = generate_query.get("adAccessCode", [""])[0]
+                if not ad_access_code:
+                    raise PerchanceServiceError(
+                        "Perchance browser verification did not provide an ad access code."
+                    )
+                page.goto(
+                    "https://image-generation.perchance.org/api/verifyUser"
+                    "?thread=0&__cacheBust=" + str(random.random()),
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
+                page.wait_for_timeout(3000)
+                request_id = f"aiImageCompletion{random.randint(10000000, 99999999)}"
+                data = page.evaluate(
+                    """
+                    async ({userKey, requestId, adAccessCode, prompt, negativePrompt,
+                            seed, resolution, guidanceScale, channel, subChannel}) => {
+                        const url = `https://image-generation.perchance.org/api/generate`
+                            + `?userKey=${encodeURIComponent(userKey)}`
+                            + `&requestId=${encodeURIComponent(requestId)}`
+                            + `&adAccessCode=${encodeURIComponent(adAccessCode)}`
+                            + `&__cacheBust=${Math.random()}`;
+                        const response = await fetch(url, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({
+                                generatorName: "ai-image-generator",
+                                prompt, negativePrompt, seed, resolution,
+                                guidanceScale, channel, subChannel, userKey,
+                                adAccessCode, requestId
+                            })
+                        });
+                        return await response.json();
+                    }
+                    """,
+                    {
+                        "userKey": user_key,
+                        "requestId": request_id,
+                        "adAccessCode": ad_access_code,
+                        "prompt": final_prompt,
+                        "negativePrompt": final_neg,
+                        "seed": int(seed),
+                        "resolution": resolution,
+                        "guidanceScale": float(guidance_scale),
+                        "channel": "b7kc35yv7u",
+                        "subChannel": target_sub_channel,
+                    },
+                )
+                if not isinstance(data, dict) or data.get("status") != "success":
+                    raise PerchanceServiceError(f"Generation failed in browser: {data}")
+
+                download_path = data.get("imageDownloadUrl", "")
+                download_url = (
+                    f"https://image-generation.perchance.org{download_path}"
+                    if download_path.startswith("/")
+                    else download_path
+                )
+                result = GenerationResult(data, download_url)
+                encoded_image = page.evaluate(
+                    """
+                    async (url) => {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const bytes = new Uint8Array(await response.arrayBuffer());
+                        let binary = "";
+                        for (const byte of bytes) binary += String.fromCharCode(byte);
+                        return btoa(binary);
+                    }
+                    """,
+                    download_url,
+                )
+                result._image_bytes = base64.b64decode(encoded_image)
+                return result
+            finally:
+                browser.close()
+
     def compose_prompt(
         self,
         description: str,
@@ -224,7 +447,15 @@ class PerchanceClient:
         """
         Generate image using the Perchance b7kc35yv7u workflow.
         """
-        user_key = self.verify_user()
+        try:
+            user_key = self.verify_user()
+        except PerchanceServiceError as exc:
+            if "client as outdated" in str(exc) or "Cloudflare challenge" in str(exc):
+                return self._generate_in_browser(
+                    prompt, negative_prompt, art_style, art_style_mix, adult_mode,
+                    shape, guidance_scale, seed, sub_channel, extra_modifiers,
+                )
+            raise
 
         # Parse resolution
         res_map = {
@@ -282,8 +513,15 @@ class PerchanceClient:
         data = self._get_json(res, "image generation")
 
         if data.get("status") == "invalid_key":
-            # Re-verify and retry once
-            user_key = self.verify_user(force=True)
+            try:
+                user_key = self.verify_user(force=True)
+            except PerchanceServiceError as exc:
+                if "client as outdated" in str(exc) or "Cloudflare challenge" in str(exc):
+                    return self._generate_in_browser(
+                        prompt, negative_prompt, art_style, art_style_mix, adult_mode,
+                        shape, guidance_scale, seed, sub_channel, extra_modifiers,
+                    )
+                raise
             body["userKey"] = user_key
             url = f"{BASE_URL}/generate?userKey={user_key}&requestId={req_id}&__cacheBust={random.random()}"
             res = self.client.post(url, json=body)
@@ -302,6 +540,13 @@ class PerchanceClient:
 
     def download_image(self, result_or_url: Any, output_path: str) -> str:
         """Download generated image bytes and write to disk."""
+        image_bytes = getattr(result_or_url, "_image_bytes", None)
+        if image_bytes is not None:
+            os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+            with open(output_path, "wb") as f:
+                f.write(image_bytes)
+            return output_path
+
         if isinstance(result_or_url, GenerationResult):
             url = result_or_url.image_download_url
         else:
