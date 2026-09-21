@@ -11,7 +11,7 @@
     <header class="app-header">
       <div class="header-content">
         <h1>🌌 Fast Free AI Image Generator</h1>
-        <p class="subtitle">1:1 Replica of <b>perchance.org/b7kc35yv7u</b> • Unlimited, No Sign-Up, Direct API</p>
+        <p class="subtitle">Uses Perchance’s browser embed • no private API bridge or server-side image collection</p>
       </div>
       <div class="adult-toggle-container">
         <label class="switch">
@@ -109,26 +109,28 @@
 
         <button type="button" class="btn-primary" id="generateBtn">
           <span class="btn-text">⚡ Generate Image</span>
-          <span class="btn-spinner" style="display: none;">⏳ Generating with Perchance API...</span>
+          <span class="btn-spinner" style="display: none;">⏳ Opening Perchance generator...</span>
         </button>
 
         <div class="status-box" id="statusBox" style="display: none;"></div>
       </div>
 
-      <!-- Right Panel: Gallery & Results -->
+      <!-- Right Panel: Perchance browser launches -->
       <div class="gallery-panel card">
         <div class="gallery-header">
-          <h2>🖼 Generated Gallery</h2>
+          <div>
+            <h2>🖼 Perchance Generator</h2>
+            <p class="embed-note">Generation opens in a new Perchance tab. Perchance handles verification, safety controls, and downloads.</p>
+          </div>
           <div class="gallery-actions">
-            <button type="button" class="btn-sm" id="unblurAllBtn">👁 Reveal NSFW Blur</button>
-            <button type="button" class="btn-sm btn-danger" id="clearGalleryBtn">🗑 Clear</button>
+            <button type="button" class="btn-sm btn-danger" id="clearEmbedsBtn">🗑 Clear</button>
           </div>
         </div>
 
-        <div class="gallery-grid" id="galleryGrid">
+        <div class="embed-grid" id="embedGrid">
           <div class="empty-state" id="emptyState">
-            <p>No images generated yet.</p>
-            <p class="sub">Configure your settings and click <b>Generate Image</b> to start!</p>
+            <p>No generator is ready yet.</p>
+            <p class="sub">Configure your settings and click <b>Generate Image</b>. Then open the official Perchance generator in a new tab.</p>
           </div>
         </div>
       </div>

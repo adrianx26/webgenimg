@@ -1,6 +1,6 @@
 # Perchance Image Generator (b7kc35yv7u Replicant)
 
-This project reverse-engineers and replicates the AI image/animation generator located at **[perchance.org/b7kc35yv7u](https://perchance.org/b7kc35yv7u)**. It provides a direct Python Client, a Model Context Protocol (MCP) server, and a modern Web UI clone.
+This project provides a local prompt-and-settings UI around **[perchance.org/b7kc35yv7u](https://perchance.org/b7kc35yv7u)**. The web UI creates links to Perchance's browser image generator; it does not proxy image traffic or collect generated image files on the local server.
 
 ---
 
@@ -10,21 +10,18 @@ This project reverse-engineers and replicates the AI image/animation generator l
 
 ```mermaid
 flowchart LR
-    Browser[Browser\nWeb UI] -->|Loads HTML, CSS, JavaScript| Web[FastAPI web_app.py]
-    Browser -->|GET /api/styles\nGET /api/history\nPOST /api/generate| Web
-    MCPClient[Codex, Claude, Cursor\nor another MCP client] -->|MCP tool call| MCP[perchance_mcp.py]
+    Browser[Browser\nLocal web UI] -->|Loads UI and style presets| Web[FastAPI web_app.py]
+    Browser -->|POST /api/compose\nPrompt composition only| Web
+    Browser -->|Opens official generator in a new tab| Embed[Perchance browser embed]
+    Embed -->|Browser verification\nand generation| Perchance[Perchance image service]
+    Perchance -->|Generated image| Embed
+    Embed -->|Displays / downloads| Browser
 
-    Web --> Client[PerchanceClient]
-    MCP --> Client
-    Client -->|Verify anonymous session| Auth[Perchance Auth API]
-    Client -->|Send prompt, style, seed\nand image settings| Generator[Perchance Generation API]
-    Generator -->|Temporary image URL| Client
-    Client -->|Download JPEG| Images[(generated_images/)]
-    Images -->|Served at /images/*| Web
-    Web -->|Gallery image| Browser
+    MCPClient[MCP client] -->|Experimental direct tool call| MCP[perchance_mcp.py]
+    MCP --> Client[Unofficial PerchanceClient]
 ```
 
-The local web app and MCP server are two entry points to the same Python client. The client sends the generation request to Perchance, downloads the returned image, and stores it locally for the gallery or the calling MCP client.
+The web UI opens Perchance's browser generator in a new tab, so each visitor completes Perchance's normal browser verification and receives images directly there. Perchance does not permit the image page to be framed by this localhost app. The MCP server still uses an unofficial direct client and may be rejected by Perchance's anti-bot or compatibility checks.
 
 Perchance generators are client-side templates hosted in iframes that communicate with a backend image generation service at `https://image-generation.perchance.org`.
 

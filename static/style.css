@@ -292,6 +292,47 @@ input[type="range"] {
   padding-bottom: 0.75rem;
 }
 
+.embed-note {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+  max-width: 42rem;
+}
+
+.embed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.launch-card {
+  min-height: 168px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.launch-card h3 {
+  font-size: 1rem;
+}
+
+.launch-card p {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.launch-link {
+  width: 100%;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  margin-top: auto;
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

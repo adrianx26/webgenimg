@@ -1,9 +1,8 @@
 let allStyles = [];
 let regularStyles = [];
 let adultStyles = [];
-let generatedImages = [];
-let globalRevealNsfw = false;
 
+const PERCHANCE_EMBED_URL = "https://image-generation.perchance.org/embed#";
 const samplePrompts = [
   "cyberpunk ronin warrior standing in neon lit rain, intricate cybernetics, katana, reflective puddles",
   "ethereal portrait of an elf sorceress in an ancient enchanted forest, magical glowing bioluminescent dust",
@@ -14,323 +13,172 @@ const samplePrompts = [
   "mythological phoenix rising from vibrant swirling flames and embers, majestic wings, digital painting"
 ];
 
-// Initialize on DOM load
 document.addEventListener("DOMContentLoaded", async () => {
   setupEventListeners();
   await loadStyles();
-  await loadHistory();
 });
-
-async function loadHistory() {
-  try {
-    const res = await fetch("/api/history");
-    const data = await res.json();
-    if (data.images && data.images.length > 0) {
-      generatedImages = data.images;
-      renderGallery();
-    }
-  } catch (err) {
-    console.error("Failed to load history:", err);
-  }
-}
 
 function setupEventListeners() {
   const adultToggle = document.getElementById("adultModeToggle");
   const adultLabel = document.getElementById("adultLabel");
   const nsfwBox = document.getElementById("nsfwModifiersBox");
-  const gSlider = document.getElementById("guidanceScale");
-  const gVal = document.getElementById("gVal");
-  const generateBtn = document.getElementById("generateBtn");
-  const randomPromptBtn = document.getElementById("randomPromptBtn");
-  const randomSeedBtn = document.getElementById("randomSeedBtn");
-  const clearNegBtn = document.getElementById("clearNegBtn");
-  const unblurAllBtn = document.getElementById("unblurAllBtn");
-  const clearGalleryBtn = document.getElementById("clearGalleryBtn");
 
-  // Adult Mode Toggle
-  adultToggle.addEventListener("change", (e) => {
-    const isAdult = e.target.checked;
-    adultLabel.innerHTML = isAdult 
-      ? '🔞 Adult Mode (+18): <b style="color:#ff3366;">ON</b>' 
-      : '🔞 Adult Mode (+18): <b>OFF</b>';
+  adultToggle.addEventListener("change", (event) => {
+    const isAdult = event.target.checked;
+    adultLabel.innerHTML = isAdult
+      ? '🔞 Adult Mode (+18): <b style="color:#ff3366;">ON</b>'
+      : "🔞 Adult Mode (+18): <b>OFF</b>";
     nsfwBox.style.display = isAdult ? "block" : "none";
     populateStyleDropdown(isAdult);
-
-    // If turned on, auto switch to a prominent NSFW style if currently on basic
-    const styleSelect = document.getElementById("artStyleSelect");
-    if (isAdult && styleSelect.value === "No style") {
-      styleSelect.value = "NSFW - Realistic";
-    }
   });
 
-  // Guidance Scale Slider
-  gSlider.addEventListener("input", (e) => {
-    gVal.textContent = parseFloat(e.target.value).toFixed(1);
+  document.getElementById("guidanceScale").addEventListener("input", (event) => {
+    document.getElementById("gVal").textContent = Number(event.target.value).toFixed(1);
   });
-
-  // Random Prompt Button
-  randomPromptBtn.addEventListener("click", () => {
-    const promptInput = document.getElementById("promptInput");
-    const choice = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
-    promptInput.value = choice;
+  document.getElementById("randomPromptBtn").addEventListener("click", () => {
+    document.getElementById("promptInput").value = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
   });
-
-  // Random Seed Button
-  randomSeedBtn.addEventListener("click", () => {
+  document.getElementById("randomSeedBtn").addEventListener("click", () => {
     document.getElementById("seedInput").value = -1;
   });
-
-  // Clear Negative Button
-  clearNegBtn.addEventListener("click", () => {
+  document.getElementById("clearNegBtn").addEventListener("click", () => {
     document.getElementById("negativeInput").value = "";
   });
+  document.getElementById("clearEmbedsBtn").addEventListener("click", clearEmbeds);
+  document.getElementById("generateBtn").addEventListener("click", handleGenerate);
 
-  // Unblur NSFW Images Button
-  unblurAllBtn.addEventListener("click", () => {
-    globalRevealNsfw = !globalRevealNsfw;
-    unblurAllBtn.textContent = globalRevealNsfw ? "🙈 Hide NSFW Blur" : "👁 Reveal NSFW Blur";
-    document.querySelectorAll(".image-wrap").forEach(wrap => {
-      const isNsfw = wrap.dataset.nsfw === "true";
-      if (isNsfw) {
-        if (globalRevealNsfw) {
-          wrap.classList.remove("nsfw-blurred");
-          const overlay = wrap.querySelector(".nsfw-overlay");
-          if (overlay) overlay.style.display = "none";
-        } else {
-          wrap.classList.add("nsfw-blurred");
-          const overlay = wrap.querySelector(".nsfw-overlay");
-          if (overlay) overlay.style.display = "flex";
-        }
-      }
-    });
-  });
-
-  // Clear Gallery Button
-  clearGalleryBtn.addEventListener("click", () => {
-    generatedImages = [];
-    renderGallery();
-  });
-
-  // Modifier Pills
-  document.querySelectorAll(".pill").forEach(pill => {
-    pill.addEventListener("click", () => {
-      const tag = pill.dataset.tag;
-      const promptInput = document.getElementById("promptInput");
-      const current = promptInput.value.trim();
-      if (current) {
-        promptInput.value = `${current}, ${tag}`;
-      } else {
-        promptInput.value = tag;
-      }
-    });
-  });
-
-  // Generate Button
-  generateBtn.addEventListener("click", handleGenerate);
+  document.querySelectorAll(".pill").forEach((pill) => pill.addEventListener("click", () => {
+    const prompt = document.getElementById("promptInput");
+    prompt.value = [prompt.value.trim(), pill.dataset.tag].filter(Boolean).join(", ");
+  }));
 }
 
 async function loadStyles() {
   try {
-    const res = await fetch("/api/styles");
-    const data = await res.json();
+    const response = await fetch("/api/styles");
+    const data = await response.json();
     allStyles = data.all || [];
     regularStyles = data.regular || [];
     adultStyles = data.adult || [];
     populateStyleDropdown(false);
     populateMixDropdown();
-  } catch (err) {
-    console.error("Failed to load styles:", err);
+  } catch (error) {
+    console.error("Failed to load styles:", error);
+    showStatus("Could not load local style presets.", "error");
   }
 }
 
 function populateStyleDropdown(isAdult) {
   const select = document.getElementById("artStyleSelect");
-  const currentVal = select.value;
+  const current = select.value;
   select.innerHTML = "";
+  if (isAdult) addOptions(select, "🔞 Adult (+18) Styles", adultStyles);
+  addOptions(select, "🎨 Standard Styles", regularStyles);
+  select.value = isAdult && adultStyles.includes(current)
+    ? current
+    : (regularStyles.includes(current) ? current : "Realistic images");
+}
 
-  if (isAdult) {
-    const optGroupAdult = document.createElement("optgroup");
-    optGroupAdult.label = "🔞 Adult (+18) Styles";
-    adultStyles.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      optGroupAdult.appendChild(opt);
-    });
-    select.appendChild(optGroupAdult);
-  }
-
-  const optGroupRegular = document.createElement("optgroup");
-  optGroupRegular.label = "🎨 Standard Styles";
-  regularStyles.forEach(s => {
-    const opt = document.createElement("option");
-    opt.value = s;
-    opt.textContent = s;
-    optGroupRegular.appendChild(opt);
-  });
-  select.appendChild(optGroupRegular);
-
-  if (isAdult && adultStyles.includes(currentVal)) {
-    select.value = currentVal;
-  } else if (!isAdult && adultStyles.includes(currentVal)) {
-    select.value = "Realistic images";
-  } else if (currentVal) {
-    select.value = currentVal;
-  }
+function addOptions(select, label, styles) {
+  const group = document.createElement("optgroup");
+  group.label = label;
+  styles.forEach((style) => group.appendChild(new Option(style, style)));
+  select.appendChild(group);
 }
 
 function populateMixDropdown() {
   const select = document.getElementById("artStyleMixSelect");
-  select.innerHTML = `
-    <option value="Not Mix">Not Mix</option>
-    <option value="NSFW">NSFW (+, nsfw)</option>
-  `;
-  allStyles.forEach(s => {
-    if (s !== "No style") {
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      select.appendChild(opt);
-    }
-  });
+  select.innerHTML = '<option value="Not Mix">Not Mix</option><option value="NSFW">NSFW (+, nsfw)</option>';
+  allStyles.filter((style) => style !== "No style").forEach((style) => select.add(new Option(style, style)));
 }
 
 async function handleGenerate() {
-  const promptInput = document.getElementById("promptInput");
-  const prompt = promptInput.value.trim();
+  const prompt = document.getElementById("promptInput").value.trim();
   if (!prompt) {
     showStatus("Please enter a prompt before generating.", "error");
     return;
   }
 
-  const negative = document.getElementById("negativeInput").value.trim();
-  const artStyle = document.getElementById("artStyleSelect").value;
-  const artStyleMix = document.getElementById("artStyleMixSelect").value;
-  const adultMode = document.getElementById("adultModeToggle").checked;
-  const shape = document.getElementById("shapeSelect").value;
-  const guidanceScale = parseFloat(document.getElementById("guidanceScale").value);
-  const seed = parseInt(document.getElementById("seedInput").value, 10);
-  const batchCount = parseInt(document.getElementById("batchCount").value, 10);
-
-  const generateBtn = document.getElementById("generateBtn");
-  const btnText = generateBtn.querySelector(".btn-text");
-  const btnSpinner = generateBtn.querySelector(".btn-spinner");
-
-  generateBtn.disabled = true;
-  btnText.style.display = "none";
-  btnSpinner.style.display = "inline";
-  showStatus(`Connecting to Perchance API... Generating ${batchCount} image(s)...`, "success");
+  const button = document.getElementById("generateBtn");
+  button.disabled = true;
+  button.querySelector(".btn-text").style.display = "none";
+  button.querySelector(".btn-spinner").style.display = "inline";
 
   try {
-    const payload = {
-      prompt,
-      negative_prompt: negative,
-      art_style: artStyle,
-      art_style_mix: artStyleMix,
-      adult_mode: adultMode,
-      shape,
-      guidance_scale: guidanceScale,
-      seed,
-      batch_count: batchCount
-    };
-
-    const res = await fetch("/api/generate", {
+    const response = await fetch("/api/compose", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        prompt,
+        negative_prompt: document.getElementById("negativeInput").value.trim(),
+        art_style: document.getElementById("artStyleSelect").value,
+        art_style_mix: document.getElementById("artStyleMixSelect").value,
+        adult_mode: document.getElementById("adultModeToggle").checked
+      })
     });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || "Could not prepare the prompt.");
 
-    const data = await res.json();
-    if (!res.ok || data.status !== "success") {
-      throw new Error(data.detail || "Failed to generate images.");
-    }
-
-    // Add generated images to beginning of list
-    data.images.forEach(img => generatedImages.unshift(img));
-    renderGallery();
-    showStatus(`Successfully generated ${data.images.length} image(s)!`, "success");
-  } catch (err) {
-    console.error("Generation error:", err);
-    showStatus(`Error: ${err.message}`, "error");
+    const count = Number(document.getElementById("batchCount").value);
+    const seed = Number(document.getElementById("seedInput").value);
+    createPerchanceLaunches(
+      data.prompt,
+      data.negative_prompt,
+      document.getElementById("shapeSelect").value,
+      Number(document.getElementById("guidanceScale").value),
+      seed,
+      count
+    );
+    showStatus("Your Perchance generator link is ready below. Open it and complete any verification there, if prompted.", "success");
+  } catch (error) {
+    console.error("Embed setup error:", error);
+    showStatus(`Error: ${error.message}`, "error");
   } finally {
-    generateBtn.disabled = false;
-    btnText.style.display = "inline";
-    btnSpinner.style.display = "none";
+    button.disabled = false;
+    button.querySelector(".btn-text").style.display = "inline";
+    button.querySelector(".btn-spinner").style.display = "none";
   }
 }
 
-function showStatus(msg, type) {
+function createPerchanceLaunches(prompt, negativePrompt, resolution, guidanceScale, requestedSeed, count) {
+  const grid = document.getElementById("embedGrid");
+  document.getElementById("emptyState")?.remove();
+
+  for (let index = 0; index < count; index += 1) {
+    const config = {
+      saveChannel: "b7kc35yv7u",
+      saveTitle: "",
+      saveDescription: "Generated through the local Perchance embed UI.",
+      prompt,
+      negativePrompt,
+      resolution,
+      guidanceScale,
+      seed: requestedSeed > 0 ? requestedSeed + index : -1
+    };
+    const card = document.createElement("section");
+    card.className = "launch-card";
+    const title = document.createElement("h3");
+    title.textContent = `Generation ${grid.children.length + 1}`;
+    const description = document.createElement("p");
+    description.textContent = `${resolution} • CFG ${guidanceScale} • ${config.seed > 0 ? `Seed ${config.seed}` : "Random seed"}`;
+    const link = document.createElement("a");
+    link.className = "btn-primary launch-link";
+    link.href = `${PERCHANCE_EMBED_URL}${encodeURIComponent(JSON.stringify(config))}`;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Open Perchance generator ↗";
+    card.append(title, description, link);
+    grid.prepend(card);
+  }
+}
+
+function clearEmbeds() {
+  document.getElementById("embedGrid").innerHTML = '<div class="empty-state" id="emptyState"><p>No generator is ready yet.</p><p class="sub">Configure your settings and click <b>Generate Image</b>.</p></div>';
+}
+
+function showStatus(message, type) {
   const box = document.getElementById("statusBox");
   box.style.display = "block";
   box.className = `status-box ${type}`;
-  box.textContent = msg;
-}
-
-function renderGallery() {
-  const grid = document.getElementById("galleryGrid");
-  if (generatedImages.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state" id="emptyState">
-        <p>No images generated yet.</p>
-        <p class="sub">Configure your settings and click <b>Generate Image</b> to start!</p>
-      </div>
-    `;
-    return;
-  }
-
-  grid.innerHTML = "";
-  generatedImages.forEach((img, idx) => {
-    const card = document.createElement("div");
-    card.className = "image-card";
-
-    const isNsfw = img.maybe_nsfw;
-    const shouldBlur = isNsfw && !globalRevealNsfw;
-
-    card.innerHTML = `
-      <div class="image-wrap ${shouldBlur ? 'nsfw-blurred' : ''}" data-nsfw="${isNsfw}">
-        <img src="${img.image_url}" alt="Generated AI image" loading="lazy">
-        ${isNsfw ? `
-          <div class="nsfw-overlay" style="display: ${shouldBlur ? 'flex' : 'none'};">
-            <span style="font-size:1.5rem;">🔞</span>
-            <b style="color:#ff3366;">18+ Content Warning</b>
-            <p style="font-size:0.75rem; color:#ccc;">This image is flagged as adult / sensitive.</p>
-            <button type="button" class="btn-reveal" onclick="revealSingleImage(this)">Click to View</button>
-          </div>
-        ` : ''}
-      </div>
-      <div class="image-info">
-        <div class="image-prompt" title="${escapeHtml(img.prompt)}">
-          <b>Prompt:</b> ${escapeHtml(img.prompt)}
-        </div>
-        <div class="image-meta">
-          <span>Seed: <code>${img.seed}</code></span>
-          <span>${img.width}x${img.height}</span>
-          <span class="badge ${isNsfw ? 'badge-nsfw' : 'badge-sfw'}">${isNsfw ? 'NSFW' : 'SFW'}</span>
-        </div>
-        <div class="image-actions">
-          <a href="${img.image_url}" download="perchance_${(img.image_id || 'img').slice(0, 8)}.jpeg" class="btn-sm" style="text-decoration:none; text-align:center; flex:1;">⬇️ Download</a>
-          <button type="button" class="btn-sm" onclick="copyPrompt('${escapeHtml(img.prompt)}')">📋 Copy</button>
-        </div>
-      </div>
-    `;
-
-    grid.appendChild(card);
-  });
-}
-
-function revealSingleImage(btn) {
-  const wrap = btn.closest(".image-wrap");
-  wrap.classList.remove("nsfw-blurred");
-  const overlay = wrap.querySelector(".nsfw-overlay");
-  if (overlay) overlay.style.display = "none";
-}
-
-function copyPrompt(text) {
-  navigator.clipboard.writeText(text);
-  alert("Prompt copied to clipboard!");
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  box.textContent = message;
 }

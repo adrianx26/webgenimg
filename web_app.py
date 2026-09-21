@@ -37,6 +37,14 @@ class GenerateRequest(BaseModel):
     batch_count: Optional[int] = 1
 
 
+class ComposeRequest(BaseModel):
+    prompt: str
+    negative_prompt: Optional[str] = ""
+    art_style: Optional[str] = "Realistic images"
+    art_style_mix: Optional[str] = "Not Mix"
+    adult_mode: Optional[bool] = False
+
+
 @app.get("/")
 def read_root():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
@@ -73,6 +81,21 @@ def get_history():
             "guidance_scale": 7.0,
         })
     return {"images": images}
+
+
+@app.post("/api/compose")
+def compose_embed_prompt(req: ComposeRequest):
+    """Compose local style settings without contacting Perchance's private API."""
+    if not req.prompt.strip():
+        raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
+    prompt, negative_prompt = client.compose_prompt(
+        description=req.prompt,
+        negative=req.negative_prompt or "",
+        art_style=req.art_style or "No style",
+        art_style_mix=req.art_style_mix or "Not Mix",
+        adult_mode=bool(req.adult_mode),
+    )
+    return {"prompt": prompt, "negative_prompt": negative_prompt}
 
 
 @app.post("/api/generate")
