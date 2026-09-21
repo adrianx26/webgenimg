@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from perchance_client import PerchanceClient
+from perchance_client import PerchanceClient, PerchanceServiceError
 
 app = FastAPI(title="Perchance b7kc35yv7u Replicant API")
 client = PerchanceClient()
@@ -113,8 +113,10 @@ def generate_images(req: GenerateRequest):
                 "negative_prompt": res.negative_prompt,
                 "guidance_scale": res.guidance_scale,
             })
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+        except PerchanceServiceError as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        except Exception:
+            raise HTTPException(status_code=500, detail="Image generation failed unexpectedly.")
 
     return {"status": "success", "images": results}
 

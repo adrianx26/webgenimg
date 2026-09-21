@@ -15,7 +15,7 @@ BASE_URL = "https://image-generation.perchance.org/api"
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0.0.0 Safari/537.36"
+    "Chrome/153.0.0.0 Safari/537.36"
 )
 
 # Load extracted styles from b7kc35yv7u
@@ -53,10 +53,22 @@ class GenerationResult:
         )
 
 
+class PerchanceServiceError(RuntimeError):
+    """An actionable error returned by Perchance's image service."""
+
+    pass
+
+
 class PerchanceClient:
-    def __init__(self, channel: str = "b7kc35yv7u", sub_channel: str = "public"):
+    def __init__(
+        self,
+        channel: str = "ai-text-to-image-generator",
+        sub_channel: str = "public",
+        generator_name: str = "ai-image-generator",
+    ):
         self.channel = channel
         self.sub_channel = sub_channel
+        self.generator_name = generator_name
         self.user_key: Optional[str] = None
         self.last_verified: float = 0
         self.styles: Dict[str, Dict[str, str]] = self._load_styles()
@@ -70,6 +82,29 @@ class PerchanceClient:
             },
             timeout=90.0,
         )
+
+    @staticmethod
+    def _get_json(response: httpx.Response, operation: str) -> Dict[str, Any]:
+        """Decode a Perchance response and turn gateway pages into useful errors."""
+        content_type = response.headers.get("content-type", "")
+        if response.status_code in (403, 429) or "text/html" in content_type:
+            raise PerchanceServiceError(
+                f"Perchance blocked {operation} (HTTP {response.status_code}). "
+                "The service requires a normal browser session; this unofficial client "
+                "cannot complete a Cloudflare challenge."
+            )
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise PerchanceServiceError(
+                f"Perchance returned a non-JSON response while attempting {operation} "
+                f"(HTTP {response.status_code})."
+            ) from exc
+        if not isinstance(data, dict):
+            raise PerchanceServiceError(
+                f"Perchance returned an unexpected response while attempting {operation}."
+            )
+        return data
 
     def _load_styles(self) -> Dict[str, Dict[str, str]]:
         if os.path.exists(STYLES_FILE):
@@ -102,12 +137,17 @@ class PerchanceClient:
 
         url = f"{BASE_URL}/verifyUser?thread=0&__cacheBust={random.random()}"
         res = self.client.get(url)
-        data = res.json()
+        data = self._get_json(res, "user verification")
         if data.get("status") in ("success", "already_verified"):
             self.user_key = data.get("userKey")
             self.last_verified = now
             return self.user_key
-        raise RuntimeError(f"User verification failed: {data}")
+        if data.get("status") == "client_update_required":
+            raise PerchanceServiceError(
+                "Perchance rejected this client as outdated. Its browser integration "
+                "has changed, and the direct unofficial API flow needs an update."
+            )
+        raise PerchanceServiceError(f"User verification failed: {data}")
 
     def compose_prompt(
         self,
@@ -223,6 +263,9 @@ class PerchanceClient:
         target_sub_channel = sub_channel or ("nsfw" if adult_mode else self.sub_channel)
 
         body = {
+            # Current Perchance clients identify the hosted image generator separately
+            # from the public generation channel.
+            "generatorName": self.generator_name,
             "prompt": final_prompt,
             "negativePrompt": final_neg,
             "seed": int(seed),
@@ -236,7 +279,7 @@ class PerchanceClient:
 
         # Submit request
         res = self.client.post(url, json=body)
-        data = res.json()
+        data = self._get_json(res, "image generation")
 
         if data.get("status") == "invalid_key":
             # Re-verify and retry once
@@ -244,10 +287,10 @@ class PerchanceClient:
             body["userKey"] = user_key
             url = f"{BASE_URL}/generate?userKey={user_key}&requestId={req_id}&__cacheBust={random.random()}"
             res = self.client.post(url, json=body)
-            data = res.json()
+            data = self._get_json(res, "image generation")
 
         if data.get("status") != "success":
-            raise RuntimeError(f"Generation failed: {data}")
+            raise PerchanceServiceError(f"Generation failed: {data}")
 
         download_path = data.get("imageDownloadUrl", "")
         if download_path.startswith("/"):
@@ -266,7 +309,7 @@ class PerchanceClient:
 
         res = self.client.get(url)
         if res.status_code != 200:
-            raise RuntimeError(f"Download failed with HTTP {res.status_code}")
+            raise PerchanceServiceError(f"Image download failed with HTTP {res.status_code}")
 
         os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         with open(output_path, "wb") as f:
